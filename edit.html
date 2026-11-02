@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>Profile Editor</title>
+  <link rel="icon" href="assets/favicon.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Inter:wght@400;500;600&family=Hind+Siliguri:wght@500&display=swap" rel="stylesheet" />
+  <style>
+    :root { --bg:#040a1c; --panel:#0a1634; --panel2:#0e1d44; --line:rgba(120,160,255,.18); --ink:#e8eefc; --ink2:#a9b7d6; --ink3:#6f7fa3; --blue:#3d7bff; --cyan:#22d3ee; --red:#f87171; --green:#34d399; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family:Inter,"Hind Siliguri",system-ui,sans-serif; background:radial-gradient(900px 600px at 80% -10%,#0d2a6b,transparent 60%),var(--bg); color:var(--ink); min-height:100vh; }
+    header { position:sticky; top:0; z-index:10; display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap; padding:14px 20px; background:rgba(4,10,28,.9); backdrop-filter:blur(12px); border-bottom:1px solid var(--line); }
+    h1 { font-family:Sora,sans-serif; font-size:18px; margin:0; display:flex; gap:10px; align-items:center; }
+    h1 a { color:var(--ink3); font-size:13px; font-family:Inter; text-decoration:none; font-weight:500; }
+    .actions { display:flex; gap:8px; flex-wrap:wrap; }
+    button, .btn { font:600 13px Inter,sans-serif; padding:9px 14px; border-radius:10px; border:1px solid var(--line); background:rgba(255,255,255,.04); color:var(--ink); cursor:pointer; text-decoration:none; }
+    button:hover, .btn:hover { background:rgba(61,123,255,.2); }
+    .primary { background:var(--blue); border-color:transparent; }
+    .primary:hover { background:#5a92ff; }
+    .danger { color:var(--red); }
+    .wrap { display:grid; grid-template-columns:210px 1fr; gap:20px; max-width:1100px; margin:0 auto; padding:20px; }
+    nav { position:sticky; top:80px; align-self:start; display:grid; gap:4px; }
+    nav button { text-align:left; background:none; border-color:transparent; color:var(--ink2); }
+    nav button.on { background:rgba(61,123,255,.18); color:var(--ink); border-color:var(--line); }
+    .panel { background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:22px; }
+    .panel h2 { font-family:Sora,sans-serif; margin:0 0 4px; font-size:20px; }
+    .hint { color:var(--ink3); font-size:13px; margin:0 0 18px; }
+    label { display:block; font-size:12px; font-weight:600; color:var(--ink2); text-transform:uppercase; letter-spacing:.05em; margin:14px 0 6px; }
+    input[type=text], textarea { width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--line); background:#06102a; color:var(--ink); font:14px Inter,"Hind Siliguri",sans-serif; }
+    input[type=text]:focus, textarea:focus { outline:2px solid var(--blue); border-color:transparent; }
+    textarea { resize:vertical; min-height:70px; line-height:1.5; }
+    .item { border:1px solid var(--line); border-radius:14px; background:var(--panel2); margin:12px 0; }
+    .item > summary { list-style:none; cursor:pointer; padding:12px 14px; display:flex; gap:10px; align-items:center; font-weight:600; }
+    .item > summary::-webkit-details-marker { display:none; }
+    .item > summary .t { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .item > summary button { padding:5px 9px; font-size:12px; }
+    .item .body { padding:0 14px 14px; }
+    fieldset { border:1px solid var(--line); border-radius:12px; padding:4px 12px 12px; margin:14px 0 0; }
+    legend { font-size:12px; color:var(--cyan); padding:0 6px; text-transform:uppercase; letter-spacing:.05em; }
+    .add { margin-top:6px; border-style:dashed; width:100%; padding:12px; }
+    .check { display:flex; gap:8px; align-items:center; text-transform:none; letter-spacing:0; font-size:14px; color:var(--ink); }
+    .photo { display:flex; gap:18px; align-items:center; flex-wrap:wrap; }
+    .photo img { width:110px; height:110px; border-radius:20px; object-fit:cover; border:1px solid var(--line); }
+    #toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(120px); background:#0e1d44; border:1px solid var(--line); padding:12px 18px; border-radius:12px; transition:.3s; z-index:20; max-width:90vw; }
+    #toast.show { transform:translateX(-50%); }
+    #toast.err { border-color:var(--red); } #toast.ok { border-color:var(--green); }
+    dialog { background:var(--panel); color:var(--ink); border:1px solid var(--line); border-radius:16px; max-width:520px; width:92vw; padding:24px; }
+    dialog::backdrop { background:rgba(0,0,0,.6); }
+    dialog p { color:var(--ink2); font-size:14px; line-height:1.6; }
+    dialog a { color:var(--cyan); }
+    .row { display:flex; gap:8px; justify-content:flex-end; margin-top:16px; }
+    @media (max-width:760px) { .wrap { grid-template-columns:1fr; } nav { position:static; display:flex; overflow-x:auto; } nav button { white-space:nowrap; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>✎ Profile Editor <a href="./">← back to site</a></h1>
+    <div class="actions">
+      <a class="btn" href="./?preview=1" target="_blank">👁 Preview</a>
+      <button id="download">⬇ Download JSON</button>
+      <button id="reset" class="danger">↺ Discard draft</button>
+      <button id="publish" class="primary">🚀 Publish</button>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <nav id="tabs"></nav>
+    <main class="panel" id="panel"></main>
+  </div>
+
+  <dialog id="pubDialog">
+    <h2 style="font-family:Sora;margin:0 0 6px">Publish to your site</h2>
+    <p>Publishing commits <code>data/profile.json</code> (and a new photo, if you picked one) to
+      <b>Ashfaq1306/Ashfaq1306.github.io</b>. The live site updates about a minute later.</p>
+    <p>Paste a GitHub <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">fine-grained token</a>
+      with access to only this repository and <b>Contents: Read and write</b>. It is sent only to api.github.com.</p>
+    <label for="token">GitHub token</label>
+    <input type="text" id="token" autocomplete="off" spellcheck="false" placeholder="github_pat_…" />
+    <label class="check"><input type="checkbox" id="remember" /> Remember on this device</label>
+    <div class="row"><button id="cancelPub">Cancel</button><button id="doPub" class="primary">Publish now</button></div>
+  </dialog>
+  <div id="toast"></div>
+
+<script>
+const OWNER = "Ashfaq1306", REPO = "Ashfaq1306.github.io", BRANCH = "main", PATH = "data/profile.json";
+const SECTIONS = [
+  ["basics", "Basics", ["name","title","tagline","location","affiliation","availability","email","photo"], "Your name, headline and the photo shown on the site."],
+  ["roles", "Typing roles", ["roles"], "The lines that type themselves under your name. One per line."],
+  ["about", "About", ["about"], "One paragraph per line."],
+  ["stats", "Stats", ["stats"], "The big numbers next to About."],
+  ["projects", "Projects", ["projects"], "Leave links empty for private work. Category before ' · ' becomes a filter."],
+  ["experience", "Experience", ["experience"], "Leave empty to hide the Experience column."],
+  ["education", "Education", ["education"], ""],
+  ["skills", "Skills", ["skills"], "Groups of skills. Items: one per line. They also fill the 3D skill sphere."],
+  ["links", "Social links", ["links"], "icon is one of: github, linkedin, huggingface, mail (anything else shows a link icon)."],
+  ["github", "GitHub feed", ["github"], "Public repos not already in Projects appear under ‘Live from GitHub’."],
+  ["raw", "Raw JSON", null, "Edit everything at once. Must be valid JSON."],
+];
+const TEMPLATES = { experience: { role: "", org: "", period: "", description: "" }, education: { school: "", degree: "", period: "", location: "" }, projects: { name: "", subtitle: "", description: "", tags: [], category: "", accent: "#3d7bff", image: "", links: [] } };
+const LONG = new Set(["tagline","summary","description","availability"]);
+const LISTS = new Set(["roles","about","highlights","tags","items","exclude"]);
+
+let data, original, pendingPhoto = null, current = "basics";
+const $ = (s) => document.querySelector(s);
+const save = () => { try { localStorage.setItem("profileDraft", JSON.stringify(pendingPhoto ? { ...data, photo: pendingPhoto } : data)); } catch {} };
+const toast = (msg, kind = "") => { const t = $("#toast"); t.textContent = msg; t.className = "show " + kind; clearTimeout(t._h); t._h = setTimeout(() => t.className = kind, 4200); };
+const titleOf = (o) => o.title || o.name || o.role || o.school || o.group || o.label || o.value || "Item";
+const blank = (v) => Array.isArray(v) ? [] : v && typeof v === "object" ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, blank(x)])) : typeof v === "boolean" ? false : "";
+
+async function init() {
+  original = await (await fetch(`data/profile.json?v=${Date.now()}`)).json();
+  let draft = null;
+  try { draft = JSON.parse(localStorage.getItem("profileDraft") || "null"); } catch {}
+  data = draft || structuredClone(original);
+  if (String(data.photo).startsWith("data:")) { pendingPhoto = data.photo; data.photo = original.photo; }
+  if (draft) toast("Loaded your unpublished draft.");
+  $("#tabs").innerHTML = SECTIONS.map(([id, label]) => `<button data-id="${id}">${label}</button>`).join("");
+  $("#tabs").onclick = (e) => { const b = e.target.closest("button"); if (b) show(b.dataset.id); };
+  show("basics");
+}
+
+function show(id) {
+  current = id;
+  document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("on", b.dataset.id === id));
+  const [, label, keys, hint] = SECTIONS.find((s) => s[0] === id);
+  const panel = $("#panel");
+  panel.innerHTML = `<h2>${label}</h2><p class="hint">${hint}</p>`;
+  if (id === "raw") {
+    const ta = document.createElement("textarea");
+    ta.style.minHeight = "65vh"; ta.style.fontFamily = "ui-monospace,monospace"; ta.style.fontSize = "12.5px";
+    ta.value = JSON.stringify(data, null, 2);
+    ta.oninput = () => { try { data = JSON.parse(ta.value); save(); ta.style.outline = ""; } catch { ta.style.outline = "2px solid var(--red)"; } };
+    panel.append(ta);
+    return;
+  }
+  if (id === "basics") panel.append(photoField());
+  keys.forEach((k) => { if (k !== "photo") panel.append(field(data, k)); });
+}
+
+function photoField() {
+  const box = document.createElement("div");
+  box.innerHTML = `<label>Photo</label><div class="photo"><img id="ph" alt=""><div><input type="file" id="phFile" accept="image/*"><p class="hint" style="margin:8px 0 0">Square images look best. It's resized to 900×900 before upload.</p></div></div>`;
+  box.querySelector("#ph").src = pendingPhoto || data.photo;
+  box.querySelector("#phFile").onchange = async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    const img = await createImageBitmap(f);
+    const s = Math.min(img.width, img.height), c = document.createElement("canvas");
+    c.width = c.height = Math.min(900, s);
+    c.getContext("2d").drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, c.width, c.height);
+    pendingPhoto = c.toDataURL("image/jpeg", 0.88);
+    box.querySelector("#ph").src = pendingPhoto;
+    save();
+    toast("New photo ready. Publish to upload it.");
+  };
+  return box;
+}
+
+function field(obj, key, labelText) {
+  const v = obj[key], wrap = document.createElement("div");
+  const lab = `<label>${labelText || key}</label>`;
+  if (Array.isArray(v) && (LISTS.has(key) || v.every((x) => typeof x === "string"))) {
+    wrap.innerHTML = lab;
+    const ta = document.createElement("textarea");
+    ta.value = v.join("\n"); ta.rows = Math.max(3, v.length + 1);
+    ta.oninput = () => { obj[key] = ta.value.split("\n").map((s) => s.trim()).filter(Boolean); save(); };
+    wrap.append(ta);
+  } else if (Array.isArray(v)) {
+    wrap.innerHTML = labelText ? lab : "";
+    const list = document.createElement("div");
+    const draw = () => {
+      list.innerHTML = "";
+      v.forEach((item, i) => {
+        const d = document.createElement("details");
+        d.className = "item"; d.open = v.length <= 2;
+        d.innerHTML = `<summary><span class="t">${esc(titleOf(item))}</span><button data-a="up" title="Move up">↑</button><button data-a="down" title="Move down">↓</button><button data-a="del" class="danger" title="Delete">✕</button></summary>`;
+        d.querySelector("summary").onclick = (e) => {
+          const a = e.target.dataset?.a; if (!a) return; e.preventDefault();
+          if (a === "del" && !confirm(`Delete "${titleOf(item)}"?`)) return;
+          if (a === "del") v.splice(i, 1);
+          if (a === "up" && i > 0) [v[i - 1], v[i]] = [v[i], v[i - 1]];
+          if (a === "down" && i < v.length - 1) [v[i + 1], v[i]] = [v[i], v[i + 1]];
+          save(); draw();
+        };
+        const body = document.createElement("div"); body.className = "body";
+        Object.keys(item).forEach((k) => body.append(field(item, k)));
+        body.addEventListener("input", () => d.querySelector(".t").textContent = titleOf(item));
+        d.append(body); list.append(d);
+      });
+      const add = document.createElement("button");
+      add.className = "add"; add.textContent = "+ Add";
+      add.onclick = () => { v.push(v.length ? blank(v[0]) : structuredClone(TEMPLATES[key] || { label: "", url: "" })); save(); draw(); list.lastElementChild.previousElementSibling.open = true; };
+      list.append(add);
+    };
+    draw(); wrap.append(list);
+  } else if (v && typeof v === "object") {
+    const fs = document.createElement("fieldset");
+    fs.innerHTML = `<legend>${key}</legend>`;
+    Object.keys(v).forEach((k) => fs.append(field(v, k)));
+    wrap.append(fs);
+  } else if (typeof v === "boolean") {
+    wrap.innerHTML = `<label class="check"><input type="checkbox" ${v ? "checked" : ""}> ${key}</label>`;
+    wrap.querySelector("input").onchange = (e) => { obj[key] = e.target.checked; save(); };
+  } else {
+    wrap.innerHTML = lab;
+    const long = LONG.has(key) || String(v ?? "").length > 90;
+    const inp = document.createElement(long ? "textarea" : "input");
+    if (!long) inp.type = "text";
+    inp.value = v ?? ""; if (long) inp.rows = 4;
+    inp.oninput = () => { obj[key] = inp.value; save(); };
+    wrap.append(inp);
+  }
+  return wrap;
+}
+function esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+$("#download").onclick = () => {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2) + "\n"], { type: "application/json" }));
+  a.download = "profile.json"; a.click();
+};
+$("#reset").onclick = () => {
+  if (!confirm("Discard your unpublished changes and reload the live profile?")) return;
+  try { localStorage.removeItem("profileDraft"); } catch {}
+  data = structuredClone(original); pendingPhoto = null; show(current); toast("Draft discarded.");
+};
+
+const dlg = $("#pubDialog");
+$("#publish").onclick = () => { try { $("#token").value = localStorage.getItem("ghToken") || ""; $("#remember").checked = !!localStorage.getItem("ghToken"); } catch {} dlg.showModal(); };
+$("#cancelPub").onclick = () => dlg.close();
+$("#doPub").onclick = async () => {
+  const token = $("#token").value.trim();
+  if (!token) return toast("Paste a token first.", "err");
+  try { $("#remember").checked ? localStorage.setItem("ghToken", token) : localStorage.removeItem("ghToken"); } catch {}
+  dlg.close();
+  try {
+    toast("Publishing…");
+    const api = (p, opt = {}) => fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${p}`, {
+      ...opt, headers: { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" },
+    });
+    const put = async (p, b64, message) => {
+      const cur = await api(`${p}?ref=${BRANCH}`);
+      const sha = cur.ok ? (await cur.json()).sha : undefined;
+      const r = await api(p, { method: "PUT", body: JSON.stringify({ message, content: b64, branch: BRANCH, sha }) });
+      if (!r.ok) throw new Error(`${r.status} ${(await r.json()).message || ""}`);
+    };
+    if (pendingPhoto) {
+      const name = `assets/portrait-${Date.now()}.jpg`;
+      await put(name, pendingPhoto.split(",")[1], "Update profile photo");
+      data.photo = name; pendingPhoto = null;
+    }
+    const bytes = new TextEncoder().encode(JSON.stringify(data, null, 2) + "\n");
+    let bin = ""; bytes.forEach((b) => (bin += String.fromCharCode(b)));
+    await put(PATH, btoa(bin), "Update profile");
+    original = structuredClone(data);
+    try { localStorage.removeItem("profileDraft"); } catch {}
+    toast("Published! The live site updates in about a minute.", "ok");
+  } catch (e) {
+    toast("Publish failed: " + e.message, "err");
+  }
+};
+init().catch((e) => toast("Could not load profile: " + e.message, "err"));
+</script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+{
+  "name": "MD Ashfaqur Rahman",
+  "title": "AI Engineer & App Developer",
+  "roles": [
+    "AI Engineer",
+    "Bangla Speech & Language AI",
+    "Flutter App Developer",
+    "Open-source Builder"
+  ],
+  "tagline": "I build AI that understands Bangla and English, and apps people actually use every day.",
+  "location": "Dhaka, Bangladesh",
+  "affiliation": "North South University",
+  "availability": "Building AI for Bangla & English",
+  "photo": "assets/portrait.webp",
+  "email": "ashfaqur87654@gmail.com",
+  "links": [
+    { "label": "GitHub", "icon": "github", "url": "https://github.com/Ashfaq1306" },
+    { "label": "LinkedIn", "icon": "linkedin", "url": "https://www.linkedin.com/in/ashfaqur-rahman-8280ab288" },
+    { "label": "Hugging Face", "icon": "huggingface", "url": "https://huggingface.co/ashfaq1306" },
+    { "label": "Email", "icon": "mail", "url": "mailto:ashfaqur87654@gmail.com" }
+  ],
+  "about": [
+    "I'm an AI engineer from Dhaka. I like turning AI models into things people can actually use: a voice assistant that understands how we really speak Bangla, a study app that helps students put their phones down, and open models that make Bangla a first-class language for AI.",
+    "I work end to end, from training and fine-tuning models to building the desktop, mobile and web apps around them, and I publish my work as open source."
+  ],
+  "stats": [
+    { "value": "3", "label": "Open-source projects" },
+    { "value": "3", "label": "Models & demos on Hugging Face" },
+    { "value": "2", "label": "Languages my AI speaks: Bangla & English" },
+    { "value": "3", "label": "Platforms: Windows, Android & web" }
+  ],
+  "projects": [
+    {
+      "name": "Sohayok (সহায়ক)",
+      "subtitle": "Your own Siri for Windows, in Bangla and English",
+      "description": "Say \"Tammy\" and Sohayok wakes up, listens and acts: opens apps, plays YouTube, changes the volume, types for you and answers questions aloud. It runs quietly in the background from sign-in, entirely on your own PC, and understands Bangla, English and Banglish.",
+      "tags": ["Python", "PyTorch", "faster-whisper", "Transformers", "Laya", "Wake word", "Windows automation"],
+      "category": "AI Assistant",
+      "accent": "#4f8cff",
+      "links": [
+        { "label": "GitHub", "url": "https://github.com/Ashfaq1306/sohayok" },
+        { "label": "Model", "url": "https://huggingface.co/ashfaq1306/sohayok-laya-actions" }
+      ]
+    },
+    {
+      "name": "Study Mate",
+      "subtitle": "Study smart. Unlock by learning.",
+      "description": "An Android app that locks distracting apps until you pass a quick AI quiz on what you studied. You set the exam pattern and pass mark, students under 15 link a parent by QR code, and an AI study buddy answers questions any time.",
+      "tags": ["Flutter", "Dart", "Kotlin", "TypeScript", "Fastify", "Prisma", "AI quizzes"],
+      "category": "Mobile App",
+      "accent": "#22d3ee",
+      "image": "https://raw.githubusercontent.com/Ashfaq1306/study-mate/main/docs/assets/screenshots/student-home.png",
+      "links": [
+        { "label": "GitHub", "url": "https://github.com/Ashfaq1306/study-mate" }
+      ]
+    },
+    {
+      "name": "laya-bangla",
+      "subtitle": "Bangla decision model for routing, moderation and triage",
+      "description": "Laya fine-tuned for Bangla so it can make typed decisions about Bangla, Banglish and Bangla-English mixed text: route a message to the right team, flag abusive comments, or sort complaints. Every answer is one of your options, with a probability for each.",
+      "tags": ["Transformers", "Fine-tuning", "LoRA", "Bangla NLP", "Hugging Face"],
+      "category": "Open Model",
+      "accent": "#a78bfa",
+      "links": [
+        { "label": "GitHub", "url": "https://github.com/Ashfaq1306/laya-bangla" },
+        { "label": "Model", "url": "https://huggingface.co/algolyzer/laya-bangla" },
+        { "label": "Live demo", "url": "https://huggingface.co/spaces/algolyzer/laya-bangla-playground" }
+      ]
+    }
+  ],
+  "experience": [],
+  "education": [
+    { "school": "North South University", "degree": "", "period": "", "location": "Dhaka" },
+    { "school": "Birshreshtha Noor Mohammad Public College (BNMPC)", "degree": "", "period": "", "location": "Dhaka" }
+  ],
+  "skills": [
+    { "group": "AI", "items": ["PyTorch", "Transformers", "Fine-tuning", "LoRA", "Speech recognition (Whisper)", "Text-to-speech", "Wake-word detection", "Hugging Face Hub"] },
+    { "group": "Focus areas", "items": ["Bangla NLP", "Voice assistants", "Text classification", "Desktop automation", "EdTech"] },
+    { "group": "Languages", "items": ["Python", "Dart", "TypeScript", "Kotlin", "JavaScript"] },
+    { "group": "Apps & tools", "items": ["Flutter", "Fastify", "Node.js", "Prisma", "FastAPI", "Git & GitHub"] }
+  ],
+  "github": {
+    "username": "Ashfaq1306",
+    "showLatest": true,
+    "exclude": ["valentine-site", "ai-doctor", "Ashfaq1306.github.io"]
+  }
+}

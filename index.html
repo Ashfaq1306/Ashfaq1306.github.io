@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MD Ashfaqur Rahman · AI Engineer & App Developer</title>
+  <meta name="description" content="MD Ashfaqur Rahman: AI engineer and app developer from Dhaka. Bangla and English voice AI, open Bangla models, and apps people use every day." />
+  <meta name="theme-color" content="#050b1f" />
+  <meta property="og:type" content="profile" />
+  <meta property="og:title" content="MD Ashfaqur Rahman · AI Engineer & App Developer" />
+  <meta property="og:description" content="Bangla-first speech and language systems, and apps people use every day." />
+  <meta property="og:image" content="https://ashfaq1306.github.io/assets/og.jpg" />
+  <meta property="og:url" content="https://ashfaq1306.github.io/" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="assets/favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&family=Hind+Siliguri:wght@500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+  </script>
+</head>
+<body>
+  <canvas id="bg3d" aria-hidden="true"></canvas>
+  <div class="grain" aria-hidden="true"></div>
+
+  <header class="nav" id="nav">
+    <a class="brand" href="#top"><span class="brand-mark">AR</span><span class="brand-name">Ashfaqur</span></a>
+    <nav class="nav-links" id="navLinks">
+      <a href="#about">About</a>
+      <a href="#projects">Projects</a>
+      <a href="#journey">Journey</a>
+      <a href="#skills">Skills</a>
+      <a href="#contact" class="nav-cta">Contact</a>
+    </nav>
+    <button class="nav-toggle" id="navToggle" aria-label="Open menu"><span></span><span></span></button>
+  </header>
+
+  <main id="top">
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-text">
+        <div class="pill reveal"><span class="dot"></span><span data-bind="availability"></span></div>
+        <h1 class="reveal"><span class="hi">Hi, I'm</span><span class="name" data-bind="name"></span></h1>
+        <div class="roles reveal"><span class="roles-prefix">&gt;</span> <span id="typed"></span><span class="caret"></span></div>
+        <p class="tagline reveal" data-bind="tagline"></p>
+        <div class="cta-row reveal">
+          <a class="btn btn-primary" href="#projects">See projects</a>
+          <a class="btn btn-ghost" href="#contact">Contact me</a>
+        </div>
+        <div class="socials reveal" id="heroSocials"></div>
+      </div>
+
+      <div class="hero-visual reveal">
+        <div class="card3d" id="portraitCard">
+          <div class="ring"></div>
+          <div class="ring ring2"></div>
+          <div class="portrait-frame">
+            <img id="portrait" alt="Portrait of MD Ashfaqur Rahman" />
+            <div class="shine"></div>
+          </div>
+          <div class="chip chip-a">🤖 AI Engineer</div>
+          <div class="chip chip-b">🧠 Deep Learning</div>
+          <div class="chip chip-c bn">বাংলা AI</div>
+          <div class="chip chip-d">📍 <span data-bind="location"></span></div>
+        </div>
+      </div>
+      <a class="scroll-hint" href="#about" aria-label="Scroll down"><span></span></a>
+    </section>
+
+    <!-- ABOUT -->
+    <section id="about" class="section">
+      <div class="section-head reveal"><span class="kicker">01 · About</span><h2>AI that speaks our language</h2></div>
+      <div class="about-grid">
+        <div class="about-text glass reveal" id="aboutText"></div>
+        <div class="stats" id="stats"></div>
+      </div>
+    </section>
+
+    <!-- PROJECTS -->
+    <section id="projects" class="section">
+      <div class="section-head reveal"><span class="kicker">02 · Projects</span><h2>Things I've built</h2></div>
+      <div class="filters reveal" id="filters"></div>
+      <div class="project-grid" id="projectGrid"></div>
+      <div class="gh-live reveal" id="ghLive" hidden>
+        <h3><span class="live-dot"></span> Live from GitHub</h3>
+        <div class="gh-grid" id="ghGrid"></div>
+      </div>
+    </section>
+
+    <!-- JOURNEY -->
+    <section id="journey" class="section">
+      <div class="section-head reveal"><span class="kicker">03 · Journey</span><h2>Education</h2></div>
+      <div class="timeline-wrap">
+        <div id="expCol"><h3 class="col-title">Experience</h3><ol class="timeline" id="experience"></ol></div>
+        <div><h3 class="col-title">Education</h3><ol class="timeline" id="education"></ol></div>
+      </div>
+    </section>
+
+    <!-- SKILLS -->
+    <section id="skills" class="section">
+      <div class="section-head reveal"><span class="kicker">04 · Skills</span><h2>Toolbox</h2></div>
+      <div class="skills-grid">
+        <div class="tagsphere reveal" id="tagSphere" aria-hidden="true"></div>
+        <div class="skill-groups" id="skillGroups"></div>
+      </div>
+    </section>
+
+    <!-- CONTACT -->
+    <section id="contact" class="section contact">
+      <div class="contact-card glass reveal">
+        <span class="kicker">05 · Contact</span>
+        <h2>Let's build something that matters.</h2>
+        <p>Have a project, a collaboration, or just a good idea? My inbox is open.</p>
+        <a class="btn btn-primary btn-lg" id="mailBtn" href="#">Say hello</a>
+        <div class="socials center" id="footSocials"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>© <span id="year"></span> <span data-bind="name"></span> · Dhaka</span>
+    <a href="edit.html" class="edit-link" title="Edit profile">✎ Edit profile</a>
+  </footer>
+
+  <script type="module" src="app.js"></script>
+  <script type="module" src="scene.js"></script>
+</body>
+</html>
