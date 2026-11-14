@@ -1,40 +1,24 @@
 {
-  "name": "MD Ashfaqur Rahman",
+  "name": "Md Ashfaqur Rahman",
   "shortName": "Ashfaqur Rahman",
   "title": "AI Engineer & App Developer",
-  "roles": [
-    "AI Engineer",
-    "Bangla Speech & Language AI",
-    "Flutter App Developer",
-    "Open-source Builder"
-  ],
   "tagline": "I build AI that understands *Bangla* and English, and the apps people use every day.",
   "statement": "I turn AI models into products people can actually use, in the language they *actually speak*.",
   "location": "Dhaka, Bangladesh",
-  "affiliation": "North South University",
-  "availability": "Building AI for Bangla & English",
   "photo": "assets/portrait.webp",
   "email": "ashfaqur87654@gmail.com",
   "links": [
     {
       "label": "GitHub",
-      "icon": "github",
       "url": "https://github.com/Ashfaq1306"
     },
     {
       "label": "LinkedIn",
-      "icon": "linkedin",
       "url": "https://www.linkedin.com/in/ashfaqur-rahman-8280ab288"
     },
     {
       "label": "Hugging Face",
-      "icon": "huggingface",
       "url": "https://huggingface.co/ashfaq1306"
-    },
-    {
-      "label": "Email",
-      "icon": "mail",
-      "url": "mailto:ashfaqur87654@gmail.com"
     }
   ],
   "heroFacts": [
@@ -139,8 +123,7 @@
             "does": "Closes Chrome"
           }
         ]
-      },
-      "accent": "#4f8cff"
+      }
     },
     {
       "name": "Joruri BD",
@@ -182,8 +165,7 @@
             "label": "emergency core"
           }
         ]
-      },
-      "accent": "#ff5d73"
+      }
     },
     {
       "name": "Study Mate",
@@ -209,9 +191,7 @@
       "visual": {
         "type": "phone",
         "image": "https://raw.githubusercontent.com/Ashfaq1306/study-mate/main/docs/assets/screenshots/student-home.png"
-      },
-      "accent": "#22d3ee",
-      "image": "https://raw.githubusercontent.com/Ashfaq1306/study-mate/main/docs/assets/screenshots/student-home.png"
+      }
     },
     {
       "name": "laya-bangla",
@@ -260,8 +240,7 @@
           }
         ],
         "note": "Illustrative example"
-      },
-      "accent": "#a78bfa"
+      }
     }
   ],
   "experience": [],
@@ -346,5 +325,7 @@
       "What's his tech stack?",
       "How can I contact him?"
     ]
-  }
+  },
+  "availability": "",
+  "affiliation": ""
 }
