@@ -4,8 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MD Ashfaqur Rahman · AI Engineer & App Developer</title>
-  <meta name="description" content="MD Ashfaqur Rahman is an AI engineer and app developer in Dhaka, building Bangla and English voice AI, open Bangla language models, and apps people use every day." />
-  <meta name="theme-color" content="#08090d" />
+  <meta name="description" content="MD Ashfaqur Rahman: AI engineer and app developer from Dhaka. Bangla and English voice AI, open Bangla models, and apps people use every day." />
+  <meta name="theme-color" content="#040a1c" />
   <meta name="color-scheme" content="dark" />
   <meta property="og:type" content="profile" />
   <meta property="og:title" content="MD Ashfaqur Rahman · AI Engineer & App Developer" />
@@ -18,125 +18,126 @@
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Hind+Siliguri:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link rel="preload" as="image" href="assets/portrait.webp" />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&family=Hind+Siliguri:wght@500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
   <script type="importmap">
     { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
   </script>
 </head>
 <body>
-  <div class="progress" id="progress" aria-hidden="true"></div>
-  <div class="cursor" id="cursor" aria-hidden="true"><span></span></div>
+  <div class="boot" id="boot" aria-hidden="true">
+    <div class="boot-inner">
+      <div class="boot-logo"><svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="lg" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="64" y2="64"><stop offset="0" stop-color="#9be7ff"/><stop offset="1" stop-color="#3d6bff"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="#071331"/><rect x="1.25" y="1.25" width="61.5" height="61.5" rx="14.75" fill="none" stroke="url(#lg)" stroke-opacity=".55" stroke-width="1.5"/><path d="M15.5 48 L30 16.5 L44.5 48" fill="none" stroke="url(#lg)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M22.5 37.5 H37.5" stroke="url(#lg)" stroke-width="4" stroke-linecap="round"/><path d="M48 9 C48.7 14 50.6 15.9 55.5 16.5 C50.6 17.1 48.7 19 48 24 C47.3 19 45.4 17.1 40.5 16.5 C45.4 15.9 47.3 14 48 9 Z" fill="url(#lg)"/></svg></div>
+      <div class="boot-title">INITIALIZING PROFILE</div>
+      <div class="boot-bar"><i id="bootBar"></i></div>
+      <div class="boot-log" id="bootLog"></div>
+    </div>
+  </div>
+  <canvas id="bg3d" aria-hidden="true"></canvas>
+  <div class="grid-overlay" aria-hidden="true"></div>
+  <div class="spotlight" id="spotlight" aria-hidden="true"></div>
+  <div class="hud-readout" aria-hidden="true"><span class="live"></span>SYS.ONLINE <b>//</b> DHAKA <span id="hudClock">--:--</span> <b>//</b> 23.81°N 90.41°E</div>
 
   <header class="nav" id="nav">
-    <a class="logo" href="#top" aria-label="Back to top">
-      <svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f3e3bd"/><stop offset="1" stop-color="#b48c4a"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="#0d1019"/><rect x="1.25" y="1.25" width="61.5" height="61.5" rx="14.75" fill="none" stroke="url(#lg)" stroke-opacity=".45" stroke-width="1.5"/><path d="M15.5 48 L30 16.5 L44.5 48" fill="none" stroke="url(#lg)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M22.5 37.5 H37.5" stroke="url(#lg)" stroke-width="4" stroke-linecap="round"/><path d="M48 9 C48.7 14 50.6 15.9 55.5 16.5 C50.6 17.1 48.7 19 48 24 C47.3 19 45.4 17.1 40.5 16.5 C45.4 15.9 47.3 14 48 9 Z" fill="url(#lg)"/></svg>
-      <span data-bind="shortName"></span>
-    </a>
+    <a class="brand" href="#top" aria-label="Back to top"><span class="brand-mark"><svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="lg" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="64" y2="64"><stop offset="0" stop-color="#9be7ff"/><stop offset="1" stop-color="#3d6bff"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="#071331"/><rect x="1.25" y="1.25" width="61.5" height="61.5" rx="14.75" fill="none" stroke="url(#lg)" stroke-opacity=".55" stroke-width="1.5"/><path d="M15.5 48 L30 16.5 L44.5 48" fill="none" stroke="url(#lg)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M22.5 37.5 H37.5" stroke="url(#lg)" stroke-width="4" stroke-linecap="round"/><path d="M48 9 C48.7 14 50.6 15.9 55.5 16.5 C50.6 17.1 48.7 19 48 24 C47.3 19 45.4 17.1 40.5 16.5 C45.4 15.9 47.3 14 48 9 Z" fill="url(#lg)"/></svg></span><span class="brand-name">Ashfaqur<em>.ai</em></span></a>
     <nav class="nav-links" id="navLinks">
-      <a href="#work">Work</a>
       <a href="#about">About</a>
-      <a href="#stack">Stack</a>
-      <a href="#contact" class="nav-cta magnetic">Let's talk</a>
+      <a href="#projects">Projects</a>
+      <a href="#journey">Journey</a>
+      <a href="#skills">Skills</a>
+      <a href="#contact" class="nav-cta">Contact</a>
     </nav>
-    <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false"><span></span><span></span></button>
+    <button class="nav-toggle" id="navToggle" aria-label="Open menu"><span></span><span></span></button>
   </header>
 
   <main id="top">
     <!-- HERO -->
-    <section class="hero" id="hero">
-      <canvas id="sphere" aria-hidden="true"></canvas>
-      <div class="hero-inner">
-        <div class="hero-copy">
-          <p class="eyebrow load" style="--d:0"><span class="eyebrow-line"></span><span id="eyebrow"></span></p>
-          <h1 class="display">
-            <span class="mask"><span class="load-up" style="--d:1" id="nameFirst"></span></span>
-            <span class="mask"><em class="load-up" style="--d:2" id="nameLast"></em></span>
-          </h1>
-          <p class="lede load" style="--d:3" id="tagline"></p>
-          <div class="hero-actions load" style="--d:4">
-            <a class="btn btn-gold magnetic" href="#work">View selected work <span aria-hidden="true">↓</span></a>
-            <a class="link-arrow" href="#contact">Get in touch <span aria-hidden="true">→</span></a>
-          </div>
-          <dl class="hero-facts load" style="--d:5" id="heroFacts"></dl>
+    <section class="hero">
+      <div class="hero-text">
+        <div class="pill reveal"><span class="dot"></span><span data-bind="availability"></span></div>
+        <h1 class="reveal"><span class="hi">Hi, I'm</span><span class="name glitch" id="heroName" data-bind="name"></span></h1>
+        <div class="roles reveal"><span class="roles-prefix">&gt;</span> <span id="typed"></span><span class="caret"></span></div>
+        <p class="tagline reveal" data-bind="tagline"></p>
+        <div class="cta-row reveal">
+          <a class="btn btn-primary" href="#projects">See projects</a>
+          <a class="btn btn-ghost" href="#contact">Contact me</a>
         </div>
+        <div class="socials reveal" id="heroSocials"></div>
+      </div>
 
-        <div class="hero-portrait load" style="--d:2">
-          <div class="arch" id="arch">
-            <img id="portrait" alt="Portrait of MD Ashfaqur Rahman" fetchpriority="high" />
-            <div class="arch-sheen"></div>
+      <div class="hero-visual reveal">
+        <div class="card3d" id="portraitCard">
+          <div class="ring"></div>
+          <div class="ring ring2"></div>
+          <div class="portrait-frame">
+            <img id="portrait" alt="Portrait of MD Ashfaqur Rahman" />
+            <div class="scan"></div>
+            <div class="shine"></div>
+            <span class="hud-corners"></span>
+            <div class="id-strip"><span>ID // ASHFAQ-1306</span><span class="ok">● ONLINE</span></div>
           </div>
-          <div class="badge" aria-hidden="true">
-            <svg viewBox="0 0 120 120">
-              <defs><path id="circ" d="M60,60 m-46,0 a46,46 0 1,1 92,0 a46,46 0 1,1 -92,0"/></defs>
-              <text><textPath href="#circ" startOffset="0">AI ENGINEER · APP DEVELOPER · DHAKA · </textPath></text>
-            </svg>
-            <span class="badge-star">✦</span>
-          </div>
-          <div class="portrait-tag bn">বাংলা · English</div>
+          <div class="chip chip-a">🤖 AI Engineer</div>
+          <div class="chip chip-b">🧠 Deep Learning</div>
+          <div class="chip chip-c bn">বাংলা AI</div>
+          <div class="chip chip-d">📍 <span data-bind="location"></span></div>
         </div>
       </div>
-      <a class="scroll-cue" href="#marquee" aria-label="Scroll"><span></span></a>
-    </section>
-
-    <!-- MARQUEE -->
-    <div class="marquee" id="marquee" aria-hidden="true"><div class="marquee-track" id="marqueeTrack"></div></div>
-
-    <!-- WORK -->
-    <section class="section" id="work">
-      <header class="section-head reveal">
-        <span class="index">(01)</span>
-        <h2>Selected <em>work</em></h2>
-        <span class="count" id="workCount"></span>
-      </header>
-      <div class="work-list" id="workList"></div>
-
-      <div class="more reveal" id="more" hidden>
-        <h3>More on GitHub</h3>
-        <ul class="more-list" id="moreList"></ul>
-      </div>
+      <a class="scroll-hint" href="#about" aria-label="Scroll down"><span></span></a>
     </section>
 
     <!-- ABOUT -->
-    <section class="section" id="about">
-      <header class="section-head reveal">
-        <span class="index">(02)</span>
-        <h2>About <em>me</em></h2>
-      </header>
-      <div class="about">
-        <p class="statement reveal" id="statement"></p>
-        <div class="about-body">
-          <div class="about-text reveal" id="aboutText"></div>
-          <dl class="facts reveal" id="facts"></dl>
-        </div>
+    <section id="about" class="section">
+      <div class="section-head reveal"><span class="kicker">// 01 — About</span><h2>AI that speaks our language</h2></div>
+      <div class="about-grid">
+        <div class="about-text glass reveal" id="aboutText"></div>
+        <div class="stats" id="stats"></div>
       </div>
-      <div class="stats" id="stats"></div>
     </section>
 
-    <!-- STACK -->
-    <section class="section" id="stack">
-      <header class="section-head reveal">
-        <span class="index">(03)</span>
-        <h2>Tools of the <em>trade</em></h2>
-      </header>
-      <div class="stack" id="stackGrid"></div>
+    <!-- PROJECTS -->
+    <section id="projects" class="section">
+      <div class="section-head reveal"><span class="kicker">// 02 — Projects</span><h2>Things I've built</h2></div>
+      <div class="filters reveal" id="filters"></div>
+      <div class="project-grid" id="projectGrid"></div>
+      <div class="gh-live reveal" id="ghLive" hidden>
+        <h3><span class="live-dot"></span> Live from GitHub</h3>
+        <div class="gh-grid" id="ghGrid"></div>
+      </div>
+    </section>
+
+    <!-- JOURNEY -->
+    <section id="journey" class="section">
+      <div class="section-head reveal"><span class="kicker">// 03 — Journey</span><h2>Education</h2></div>
+      <div class="timeline-wrap">
+        <div id="expCol"><h3 class="col-title">Experience</h3><ol class="timeline" id="experience"></ol></div>
+        <div><h3 class="col-title">Education</h3><ol class="timeline" id="education"></ol></div>
+      </div>
+    </section>
+
+    <!-- SKILLS -->
+    <section id="skills" class="section">
+      <div class="section-head reveal"><span class="kicker">// 04 — Skills</span><h2>Toolbox</h2></div>
+      <div class="skills-grid">
+        <div class="tagsphere reveal" id="tagSphere" aria-hidden="true"></div>
+        <div class="skill-groups" id="skillGroups"></div>
+      </div>
     </section>
 
     <!-- CONTACT -->
-    <section class="section contact" id="contact">
-      <span class="index reveal">(04)</span>
-      <h2 class="contact-title reveal">Let's build something <em>meaningful</em>.</h2>
-      <p class="contact-sub reveal">Have a project, a collaboration or a good idea? I'd love to hear about it.</p>
-      <a class="contact-mail reveal magnetic" id="mail" href="#"><span id="mailText"></span><span class="arrow" aria-hidden="true">↗</span></a>
-      <ul class="contact-links reveal" id="contactLinks"></ul>
+    <section id="contact" class="section contact">
+      <div class="contact-card glass reveal">
+        <span class="kicker">// 05 — Contact</span>
+        <h2>Let's build something that matters.</h2>
+        <p>Have a project, a collaboration, or just a good idea? My inbox is open.</p>
+        <a class="btn btn-primary btn-lg" id="mailBtn" href="#">Say hello</a>
+        <div class="socials center" id="footSocials"></div>
+      </div>
     </section>
   </main>
 
   <footer class="footer">
-    <span>© <span id="year"></span> <span data-bind="name"></span></span>
-    <span class="clock">Dhaka · <span id="clock">--:--</span></span>
-    <a href="#top" class="to-top">Back to top ↑</a>
+    <span>© <span id="year"></span> <span data-bind="name"></span> · Dhaka</span>
+    <span class="foot-mono">Built with Three.js · Powered by AI ✦</span>
   </footer>
 
   <script type="module" src="app.js"></script>

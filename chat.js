@@ -38,7 +38,7 @@ function localAnswer(p, q) {
   if (has("github", "hugging", "open source", "model", "link", "linkedin"))
     return (p.links || []).map((l) => `${l.label}: ${l.url}`).join("\n");
   if (has("who", "about", "yourself", "introduce", "background", "tell me", "কে"))
-    return `${p.name} is an ${p.title.toLowerCase()} in ${p.location}. ${(p.about || [])[0] || ""}`;
+    return `${p.name} is ${/^[aeiou]/i.test(p.title) ? "an" : "a"} ${p.title} based in ${p.location}. He builds AI that understands Bangla and English, and the apps around it: ${projects.map((x) => x.name).join(", ")}. Ask me about any of them.`;
   if (has("are you", "bot", " ai", "robot"))
     return "I'm a small assistant on this page. I answer from his public profile.";
   return `I'm not sure about that. I can tell you about his projects (${projects.map((x) => x.name).join(", ")}), his skills, education or how to contact him. For anything else, email ${p.email}.`;

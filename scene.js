@@ -1,189 +1,257 @@
-// Hero 3D: a breathing sphere of points (animated on the GPU) with a gold orbit and drifting dust.
-// It renders only while the hero is on screen, at a resolution that adapts to the device.
+// WebGL background: a glowing "neural globe" of nodes and synapses plus a starfield.
 import * as THREE from "three";
 
-const canvas = document.getElementById("sphere");
-const hero = document.getElementById("hero");
+const canvas = document.getElementById("bg3d");
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-const mobile = matchMedia("(max-width: 720px), (pointer: coarse)").matches;
+const mobile = matchMedia("(max-width: 760px), (pointer: coarse)").matches;
+const lowEnd = mobile || (navigator.hardwareConcurrency || 8) <= 4;
 
 let renderer;
 try {
-  renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true, powerPreference: "high-performance" });
-} catch {
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: !lowEnd, alpha: true, powerPreference: "high-performance" });
+} catch (e) {
   canvas.remove();
-  throw new Error("WebGL unavailable");
+  throw e;
 }
-let dpr = Math.min(devicePixelRatio, mobile ? 1.5 : 2);
-const minDpr = mobile ? 0.75 : 1;
+// phones: render at a lower resolution (the glow hides it) and adapt further if frames are slow
+let dpr = mobile ? Math.min(devicePixelRatio, 1.25) : Math.min(devicePixelRatio, 2);
+const minDpr = mobile ? 0.6 : 1;
 renderer.setPixelRatio(dpr);
+renderer.setSize(innerWidth, innerHeight);
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
-camera.position.set(0, 0, 10);
+scene.fog = new THREE.FogExp2(0x040a1c, 0.045);
+const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 100);
+camera.position.set(0, 0, 9);
 
-const uniforms = {
-  uTime: { value: 0 },
-  uPixel: { value: dpr },
-  uMouse: { value: new THREE.Vector2() },
-};
-
-// ---------- the sphere ----------
-const N = mobile ? 2600 : 7000;
-const pos = new Float32Array(N * 3);
-const rnd = new Float32Array(N);
-for (let i = 0; i < N; i++) {
-  const y = 1 - (i / (N - 1)) * 2, r = Math.sqrt(1 - y * y), t = Math.PI * (3 - Math.sqrt(5)) * i;
-  pos.set([Math.cos(t) * r, y, Math.sin(t) * r], i * 3);
-  rnd[i] = Math.random();
-}
-const geo = new THREE.BufferGeometry();
-geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-geo.setAttribute("aRnd", new THREE.BufferAttribute(rnd, 1));
-
-const mat = new THREE.ShaderMaterial({
-  uniforms,
-  transparent: true,
-  depthWrite: false,
-  blending: THREE.AdditiveBlending,
-  vertexShader: /* glsl */ `
-    uniform float uTime; uniform float uPixel; uniform vec2 uMouse;
-    attribute float aRnd;
-    varying float vDepth; varying float vWave; varying float vRnd;
-    void main() {
-      vec3 p = position;
-      float w = sin(p.x * 3.1 + uTime * 0.9) * sin(p.y * 3.7 + uTime * 0.7) * sin(p.z * 2.9 + uTime * 0.8);
-      float ripple = sin(dot(p.xy, uMouse) * 4.0 - uTime * 1.6) * 0.03 * length(uMouse);
-      p *= 1.0 + w * 0.11 + ripple;
-      vec4 mv = modelViewMatrix * vec4(p * 2.35, 1.0);
-      gl_Position = projectionMatrix * mv;
-      vDepth = smoothstep(-12.5, -7.6, mv.z);
-      vWave = w; vRnd = aRnd;
-      gl_PointSize = (1.4 + aRnd * 1.6 + max(w, 0.0) * 2.2) * uPixel * (9.0 / -mv.z);
-    }`,
-  fragmentShader: /* glsl */ `
-    varying float vDepth; varying float vWave; varying float vRnd;
-    void main() {
-      float d = length(gl_PointCoord - 0.5);
-      if (d > 0.5) discard;
-      float a = smoothstep(0.5, 0.0, d);
-      vec3 ivory = vec3(0.93, 0.91, 0.87);
-      vec3 gold  = vec3(0.90, 0.76, 0.49);
-      vec3 blue  = vec3(0.45, 0.56, 1.0);
-      vec3 c = mix(blue, ivory, vDepth);
-      c = mix(c, gold, smoothstep(0.15, 0.7, vWave) * 0.9 + step(0.97, vRnd) * 0.6);
-      gl_FragColor = vec4(c, a * (0.12 + vDepth * 0.75));
-    }`,
-});
-const sphere = new THREE.Points(geo, mat);
-const group = new THREE.Group();
-group.add(sphere);
-scene.add(group);
-
-// ---------- gold orbit ring of points ----------
-const RN = mobile ? 260 : 520;
-const rpos = new Float32Array(RN * 3);
-for (let i = 0; i < RN; i++) {
-  const a = (i / RN) * Math.PI * 2, rr = 3.25 + (Math.random() - 0.5) * 0.08;
-  rpos.set([Math.cos(a) * rr, (Math.random() - 0.5) * 0.04, Math.sin(a) * rr], i * 3);
-}
-const ringGeo = new THREE.BufferGeometry();
-ringGeo.setAttribute("position", new THREE.BufferAttribute(rpos, 3));
-const dot = (() => {
-  const c = document.createElement("canvas"); c.width = c.height = 32;
-  const g = c.getContext("2d"), grd = g.createRadialGradient(16, 16, 0, 16, 16, 16);
-  grd.addColorStop(0, "rgba(255,255,255,1)"); grd.addColorStop(1, "rgba(255,255,255,0)");
-  g.fillStyle = grd; g.fillRect(0, 0, 32, 32);
+// soft round sprite for points
+const sprite = (() => {
+  const c = document.createElement("canvas");
+  c.width = c.height = 64;
+  const g = c.getContext("2d");
+  const grd = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  grd.addColorStop(0, "rgba(255,255,255,1)");
+  grd.addColorStop(0.25, "rgba(160,200,255,.9)");
+  grd.addColorStop(1, "rgba(60,120,255,0)");
+  g.fillStyle = grd;
+  g.fillRect(0, 0, 64, 64);
   return new THREE.CanvasTexture(c);
 })();
-const ring = new THREE.Points(ringGeo, new THREE.PointsMaterial({ size: 0.05, map: dot, color: 0xd9bd84, transparent: true, opacity: 0.7, depthWrite: false, blending: THREE.AdditiveBlending }));
-ring.rotation.set(1.15, 0.2, -0.35);
-group.add(ring);
-const moon = new THREE.Sprite(new THREE.SpriteMaterial({ map: dot, color: 0xf3e3bd, depthWrite: false, blending: THREE.AdditiveBlending }));
-moon.scale.setScalar(0.28);
-ring.add(moon);
 
-// ---------- dust ----------
-const DN = mobile ? 120 : 320;
-const dpos = new Float32Array(DN * 3);
-for (let i = 0; i < DN; i++) dpos.set([(Math.random() - 0.5) * 22, (Math.random() - 0.5) * 12, -Math.random() * 10], i * 3);
-const dustGeo = new THREE.BufferGeometry();
-dustGeo.setAttribute("position", new THREE.BufferAttribute(dpos, 3));
-const dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({ size: 0.035, map: dot, color: 0xa9b8ff, transparent: true, opacity: 0.45, depthWrite: false, blending: THREE.AdditiveBlending }));
-scene.add(dust);
+// ---------- neural globe ----------
+const globe = new THREE.Group();
+scene.add(globe);
 
-// ---------- layout ----------
-function layout() {
-  const w = hero.clientWidth, h = hero.clientHeight;
-  renderer.setSize(w, h, false);
-  camera.aspect = w / h;
-  camera.updateProjectionMatrix();
-  // desktop: sphere sits behind the portrait on the right; phones: behind the portrait at the top
-  const wide = w > 980;
-  const visibleH = 2 * Math.tan((camera.fov * Math.PI) / 360) * camera.position.z;
-  const visibleW = visibleH * camera.aspect;
-  if (wide) {
-    group.position.set(visibleW * 0.2, 0.1, 0);
-    group.scale.setScalar(1);
-  } else {
-    group.position.set(0, visibleH * 0.26, 0);
-    group.scale.setScalar(Math.min(1, visibleW / 7.4));
+const N = mobile ? 240 : lowEnd ? 500 : 900;
+const R = 2.6;
+const nodes = [];
+const pos = new Float32Array(N * 3);
+const col = new Float32Array(N * 3);
+const cA = new THREE.Color("#3d7bff"), cB = new THREE.Color("#22d3ee"), cC = new THREE.Color("#a78bfa");
+for (let i = 0; i < N; i++) {
+  const y = 1 - (i / (N - 1)) * 2, r = Math.sqrt(1 - y * y), t = Math.PI * (3 - Math.sqrt(5)) * i;
+  const jitter = 1 + (Math.random() - 0.5) * 0.12;
+  const v = new THREE.Vector3(Math.cos(t) * r, y, Math.sin(t) * r).multiplyScalar(R * jitter);
+  nodes.push(v);
+  pos.set([v.x, v.y, v.z], i * 3);
+  const c = cA.clone().lerp(Math.random() > 0.5 ? cB : cC, Math.random() * 0.8);
+  col.set([c.r, c.g, c.b], i * 3);
+}
+const nodeGeo = new THREE.BufferGeometry();
+nodeGeo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+nodeGeo.setAttribute("color", new THREE.BufferAttribute(col, 3));
+const nodeMat = new THREE.PointsMaterial({
+  size: mobile ? 0.11 : 0.09, map: sprite, vertexColors: true, transparent: true,
+  depthWrite: false, blending: THREE.AdditiveBlending,
+});
+globe.add(new THREE.Points(nodeGeo, nodeMat));
+
+// synapses between nearby nodes
+const linePos = [];
+const maxD = R * (mobile ? 0.3 : 0.19);
+for (let i = 0; i < N; i++) {
+  let k = 0;
+  for (let j = i + 1; j < N && k < (mobile ? 2 : 3); j++) {
+    if (nodes[i].distanceTo(nodes[j]) < maxD) {
+      linePos.push(nodes[i].x, nodes[i].y, nodes[i].z, nodes[j].x, nodes[j].y, nodes[j].z);
+      k++;
+    }
   }
 }
-let lastW = 0, lastH = 0;
-function onResize() {
-  // ignore the small height changes caused by mobile address bars
-  if (hero.clientWidth === lastW && Math.abs(hero.clientHeight - lastH) < 160) return;
-  lastW = hero.clientWidth; lastH = hero.clientHeight;
-  layout();
+const lineGeo = new THREE.BufferGeometry();
+lineGeo.setAttribute("position", new THREE.Float32BufferAttribute(linePos, 3));
+const lineMat = new THREE.LineBasicMaterial({ color: 0x4f8cff, transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false });
+globe.add(new THREE.LineSegments(lineGeo, lineMat));
+
+// inner glowing core + wire shells
+const core = new THREE.Mesh(
+  new THREE.IcosahedronGeometry(1.15, 2),
+  new THREE.MeshBasicMaterial({ color: 0x2a5cff, wireframe: true, transparent: true, opacity: 0.18 })
+);
+globe.add(core);
+const shell = new THREE.Mesh(
+  new THREE.IcosahedronGeometry(R * 1.18, 1),
+  new THREE.MeshBasicMaterial({ color: 0x22d3ee, wireframe: true, transparent: true, opacity: 0.05 })
+);
+globe.add(shell);
+
+// orbit rings
+const rings = [];
+[[R * 1.35, 0.9, 0x3d7bff], [R * 1.55, -0.5, 0x8b5cf6], [R * 1.2, 0.2, 0x22d3ee]].forEach(([rad, tilt, color], i) => {
+  const ring = new THREE.Mesh(
+    new THREE.TorusGeometry(rad, 0.008, 8, 200),
+    new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending })
+  );
+  ring.rotation.x = Math.PI / 2 + tilt;
+  ring.rotation.y = i * 0.6;
+  // a satellite on each ring
+  const sat = new THREE.Sprite(new THREE.SpriteMaterial({ map: sprite, color, blending: THREE.AdditiveBlending, depthWrite: false }));
+  sat.scale.setScalar(0.35);
+  ring.add(sat);
+  ring.userData = { rad, sat, speed: 0.25 + i * 0.12 };
+  rings.push(ring);
+  globe.add(ring);
+});
+
+// signals travelling along synapses
+const PULSES = mobile ? 16 : 70;
+const pulsePos = new Float32Array(PULSES * 3);
+const pulses = [];
+const segCount = linePos.length / 6;
+for (let i = 0; i < PULSES; i++) pulses.push({ seg: (Math.random() * segCount) | 0, t: Math.random(), v: 0.4 + Math.random() * 0.9 });
+const pulseGeo = new THREE.BufferGeometry();
+pulseGeo.setAttribute("position", new THREE.BufferAttribute(pulsePos, 3));
+globe.add(new THREE.Points(pulseGeo, new THREE.PointsMaterial({ size: 0.16, map: sprite, color: 0xbff4ff, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })));
+
+// ---------- starfield ----------
+const S = mobile ? 450 : 2200;
+const starPos = new Float32Array(S * 3);
+for (let i = 0; i < S; i++) {
+  starPos.set([(Math.random() - 0.5) * 60, (Math.random() - 0.5) * 60, -Math.random() * 40 - 2], i * 3);
 }
-addEventListener("resize", onResize, { passive: true });
-onResize();
+const starGeo = new THREE.BufferGeometry();
+starGeo.setAttribute("position", new THREE.BufferAttribute(starPos, 3));
+const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ size: 0.06, map: sprite, color: 0x9cc3ff, transparent: true, opacity: 0.8, depthWrite: false, blending: THREE.AdditiveBlending }));
+scene.add(stars);
+
+// floating geometric shards
+const shards = [];
+const shardGeos = [new THREE.OctahedronGeometry(0.28), new THREE.TetrahedronGeometry(0.3), new THREE.IcosahedronGeometry(0.24)];
+for (let i = 0; i < (mobile ? 4 : 14); i++) {
+  const m = new THREE.Mesh(shardGeos[i % 3], new THREE.MeshBasicMaterial({ color: [0x3d7bff, 0x22d3ee, 0x8b5cf6][i % 3], wireframe: true, transparent: true, opacity: 0.5 }));
+  m.position.set((Math.random() - 0.5) * 18, (Math.random() - 0.5) * 12, -Math.random() * 8 - 1);
+  m.userData = { s: 0.2 + Math.random() * 0.6, o: Math.random() * 10 };
+  shards.push(m);
+  scene.add(m);
+}
+
+// ---------- neon grid floor (scrolls toward the viewer) ----------
+const CELL = mobile ? 2.4 : 1.6, HALF = mobile ? 18 : 30, DEPTH = mobile ? 40 : 60;
+const gpos = [];
+for (let x = -HALF; x <= HALF + 1e-6; x += CELL) gpos.push(x, 0, 6, x, 0, 6 - DEPTH);
+for (let z = 6; z >= 6 - DEPTH - 1e-6; z -= CELL) gpos.push(-HALF, 0, z, HALF, 0, z);
+const gridGeo = new THREE.BufferGeometry();
+gridGeo.setAttribute("position", new THREE.Float32BufferAttribute(gpos, 3));
+const gridFloor = new THREE.LineSegments(gridGeo, new THREE.LineBasicMaterial({ color: 0x2f6bff, transparent: true, opacity: 0.32, blending: THREE.AdditiveBlending, depthWrite: false }));
+gridFloor.position.y = -4.6;
+scene.add(gridFloor);
+// horizon glow line
+const horizon = new THREE.Mesh(new THREE.PlaneGeometry(80, 0.08), new THREE.MeshBasicMaterial({ color: 0x22d3ee, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false }));
+horizon.position.set(0, -4.55, 6 - DEPTH * 0.55);
+scene.add(horizon);
 
 // ---------- interaction ----------
 const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
 addEventListener("pointermove", (e) => { mouse.tx = e.clientX / innerWidth - 0.5; mouse.ty = e.clientY / innerHeight - 0.5; }, { passive: true });
+let scrollP = 0;
+addEventListener("scroll", () => { scrollP = scrollY / Math.max(1, document.documentElement.scrollHeight - innerHeight); }, { passive: true });
+// Mobile browsers fire resize whenever the address bar shows/hides while scrolling.
+// Re-allocating the canvas then causes visible jank, so only resize on real changes.
+let lastW = innerWidth, lastH = innerHeight;
+addEventListener("resize", () => {
+  if (innerWidth === lastW && Math.abs(innerHeight - lastH) < 160) return;
+  lastW = innerWidth; lastH = innerHeight;
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+}, { passive: true });
 
 const clock = new THREE.Clock();
+const a = new THREE.Vector3(), b = new THREE.Vector3();
+let running = true;
+document.addEventListener("visibilitychange", () => { running = !document.hidden; if (running && !reduced) { clock.getDelta(); loop(); } });
+
 function frame() {
   const dt = Math.min(clock.getDelta(), 0.05);
-  const t = (uniforms.uTime.value += dt);
-  mouse.x += (mouse.tx - mouse.x) * 0.04;
-  mouse.y += (mouse.ty - mouse.y) * 0.04;
-  uniforms.uMouse.value.set(mouse.x * 2, -mouse.y * 2);
-  sphere.rotation.y += dt * 0.08;
-  group.rotation.y = mouse.x * 0.5;
-  group.rotation.x = mouse.y * 0.35 + Math.sin(t * 0.25) * 0.05;
-  ring.rotation.z += dt * 0.05;
-  const a = t * 0.35;
-  moon.position.set(Math.cos(a) * 3.25, 0, Math.sin(a) * 3.25);
-  dust.rotation.y = t * 0.01;
-  // fade and sink as the hero scrolls away
-  const k = Math.min(1, scrollY / (hero.clientHeight || 1));
-  canvas.style.opacity = String(1 - k * 0.9);
-  group.position.z = -k * 2;
+  const t = clock.elapsedTime;
+  mouse.x += (mouse.tx - mouse.x) * 0.05;
+  mouse.y += (mouse.ty - mouse.y) * 0.05;
+
+  // globe sits right of the hero, drifts left and back as you scroll
+  const wide = innerWidth > 960;
+  const baseX = wide ? 3.4 : 0;
+  const baseY = wide ? 0 : 1.8;
+  globe.position.x = baseX - Math.sin(scrollP * Math.PI * 2) * (wide ? 6.5 : 0.5);
+  globe.position.y = baseY + Math.cos(scrollP * Math.PI * 4) * 0.4 - (wide ? 0 : scrollP * 1.5);
+  globe.position.z = -scrollP * 3 - (wide ? 1.5 : 3);
+  globe.rotation.y += dt * 0.12 + mouse.x * dt * 0.6;
+  globe.rotation.x = mouse.y * 0.5 + Math.sin(t * 0.2) * 0.1;
+  core.rotation.x -= dt * 0.3;
+  core.rotation.z += dt * 0.2;
+  shell.rotation.y -= dt * 0.05;
+  const pulse = 1 + Math.sin(t * 1.6) * 0.04;
+  core.scale.setScalar(pulse);
+
+  rings.forEach((r) => {
+    const { rad, sat, speed } = r.userData;
+    const ang = t * speed;
+    sat.position.set(Math.cos(ang) * rad, Math.sin(ang) * rad, 0);
+  });
+
+  const lp = lineGeo.attributes.position.array;
+  pulses.forEach((p, i) => {
+    p.t += dt * p.v;
+    if (p.t > 1) { p.t = 0; p.seg = (Math.random() * segCount) | 0; }
+    const o = p.seg * 6;
+    a.set(lp[o], lp[o + 1], lp[o + 2]);
+    b.set(lp[o + 3], lp[o + 4], lp[o + 5]);
+    a.lerp(b, p.t);
+    pulsePos.set([a.x, a.y, a.z], i * 3);
+  });
+  pulseGeo.attributes.position.needsUpdate = true;
+
+  stars.rotation.z = t * 0.005;
+  gridFloor.position.z = (t * 1.1) % CELL;
+  gridFloor.position.y = -4.6 - scrollP * 2.5;
+  horizon.position.y = gridFloor.position.y + 0.05;
+  stars.position.y = scrollP * 6;
+  shards.forEach((m) => {
+    m.rotation.x += dt * m.userData.s;
+    m.rotation.y += dt * m.userData.s * 0.7;
+    m.position.y += Math.sin(t + m.userData.o) * 0.002;
+  });
+
+  camera.position.x = mouse.x * 1.2;
+  camera.position.y = -mouse.y * 0.8;
+  camera.lookAt(0, 0, -2);
   renderer.render(scene, camera);
 }
 
-// ---------- loop: only while visible, adaptive quality ----------
-let visible = true, raf = 0, acc = 0, n = 0, half = false, skip = false;
+// Adaptive quality: if frames take too long, lower the resolution step by step,
+// and if that is not enough, render every other frame (30 fps).
+let acc = 0, count = 0, cap30 = false, skip = false;
 function loop() {
-  raf = 0;
-  if (!visible || document.hidden) return;
-  raf = requestAnimationFrame(loop);
-  if (half && (skip = !skip)) return;
+  if (!running) return;
+  requestAnimationFrame(loop);
+  if (cap30 && (skip = !skip)) return;
   const t0 = performance.now();
   frame();
   acc += performance.now() - t0;
-  if (++n === 50) {
-    if (acc / n > 7) {
-      if (dpr > minDpr) { dpr = Math.max(minDpr, dpr - 0.25); renderer.setPixelRatio(dpr); uniforms.uPixel.value = dpr; layout(); }
-      else half = true;
-    }
-    acc = 0; n = 0;
+  if (++count === 45) {
+    const avg = acc / count;
+    if (avg > 8 && dpr > minDpr) { dpr = Math.max(minDpr, dpr - 0.2); renderer.setPixelRatio(dpr); renderer.setSize(innerWidth, innerHeight); }
+    else if (avg > 8 && !cap30) cap30 = true;
+    acc = 0; count = 0;
   }
 }
-const start = () => { if (!raf && !reduced) { clock.getDelta(); raf = requestAnimationFrame(loop); } };
-new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible) start(); }).observe(hero);
-document.addEventListener("visibilitychange", () => { if (!document.hidden) start(); });
-reduced ? frame() : start();
+reduced ? frame() : loop();
