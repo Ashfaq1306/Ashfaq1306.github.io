@@ -1,204 +1,261 @@
-// Renders the profile from data/profile.json. Edit that file (or use edit.html) to update the site.
-const ICONS = {
-  github: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.4-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z"/></svg>',
-  linkedin: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28ZM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13ZM7.12 20.45H3.56V9h3.56v11.45ZM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0Z"/></svg>',
-  huggingface: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="11" r="8.5"/><circle cx="9" cy="9.5" r=".9" fill="currentColor"/><circle cx="15" cy="9.5" r=".9" fill="currentColor"/><path d="M8.6 13.2c.9 1.5 2 2.2 3.4 2.2s2.5-.7 3.4-2.2"/><path d="M4.2 15.5c-1 .6-1.6 1.8-.9 3 .9 1.4 3 1.6 4.4 2.5M19.8 15.5c1 .6 1.6 1.8.9 3-.9 1.4-3 1.6-4.4 2.5"/></svg>',
-  mail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg>',
-  link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>',
-  lock: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
-};
-
-const esc = (s = "") => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+// Renders the profile from data/profile.json and adds the interactions.
+import { initChat } from "./chat.js";
 const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = (s = "") => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+// *word* in the data becomes <em>word</em>
+const rich = (s = "") => esc(s).replace(/\*(.+?)\*/g, "<em>$1</em>");
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-const finePointer = matchMedia("(pointer: fine)").matches;
+const fine = matchMedia("(pointer: fine)").matches;
+const isLocal = ["localhost", "127.0.0.1"].includes(location.hostname);
 
 async function loadProfile() {
-  const params = new URLSearchParams(location.search);
-  if (params.has("preview")) {
-    try {
-      const draft = localStorage.getItem("profileDraft");
-      if (draft) return JSON.parse(draft);
-    } catch {}
+  // ?preview shows an unpublished draft, only when the site is opened from your own PC
+  if (isLocal && new URLSearchParams(location.search).has("preview")) {
+    try { const d = localStorage.getItem("profileDraft"); if (d) return JSON.parse(d); } catch {}
   }
   const res = await fetch(`data/profile.json?v=${Date.now()}`);
   return res.json();
 }
 
-function linkBtn(l) {
-  const icon = /github/i.test(l.url) ? ICONS.github : /huggingface/i.test(l.url) ? ICONS.huggingface : ICONS.link;
-  return `<a class="link-btn" href="${esc(l.url)}" target="_blank" rel="noopener">${icon}${esc(l.label)}</a>`;
-}
-
+/* ---------------- render ---------------- */
 function render(p) {
-  document.querySelectorAll("[data-bind]").forEach((el) => (el.textContent = p[el.dataset.bind] ?? ""));
-  $("#portrait").src = p.photo;
+  $$("[data-bind]").forEach((el) => (el.textContent = p[el.dataset.bind] ?? ""));
+  document.title = `${p.name} · ${p.title}`;
   $("#year").textContent = new Date().getFullYear();
 
-  const socials = (p.links || []).map((l) => `<a class="social" href="${esc(l.url)}" ${l.url.startsWith("mailto") ? "" : 'target="_blank" rel="noopener"'} aria-label="${esc(l.label)}" title="${esc(l.label)}">${ICONS[l.icon] || ICONS.link}</a>`).join("");
-  $("#heroSocials").innerHTML = socials;
-  $("#footSocials").innerHTML = socials;
-  $("#mailBtn").href = `mailto:${p.email}`;
-  $("#mailBtn").textContent = `Say hello · ${p.email}`;
+  // hero
+  const parts = p.name.trim().split(/\s+/);
+  $("#nameFirst").textContent = parts.slice(0, -1).join(" ");
+  $("#nameLast").textContent = parts.at(-1);
+  $("#eyebrow").textContent = `${p.title} · ${p.location}`;
+  $("#tagline").innerHTML = rich(p.tagline);
+  $("#portrait").src = p.photo;
+  $("#heroFacts").innerHTML = (p.heroFacts || []).map((f) => `<div><dt>${esc(f.label)}</dt><dd>${esc(f.value)}</dd></div>`).join("");
 
-  $("#aboutText").innerHTML = (p.about || []).map((t) => `<p>${esc(t)}</p>`).join("") +
-    `<div class="about-meta"><span class="meta-tag">📍 ${esc(p.location)}</span><span class="meta-tag">🎓 ${esc(p.affiliation)}</span><span class="meta-tag">🗣️ Bangla · English</span></div>`;
-  $("#stats").innerHTML = (p.stats || []).map((s) => `<div class="stat glass tilt reveal"><span class="v" data-count="${esc(s.value)}">${esc(s.value)}</span><span class="l">${esc(s.label)}</span></div>`).join("");
+  // marquee (doubled for a seamless loop)
+  const items = (p.marquee || []).map((m) => `<span>${esc(m)}</span>`).join("");
+  $("#marqueeTrack").innerHTML = items + items;
 
-  // Projects
+  // work
   const projects = p.projects || [];
-  const cats = ["All", ...new Set(projects.map((x) => (x.category || "").split(" · ")[0]).filter(Boolean))];
-  $("#filters").innerHTML = cats.map((c, i) => `<button class="filter ${i ? "" : "on"}" data-cat="${esc(c)}">${esc(c)}</button>`).join("");
-  $("#projectGrid").innerHTML = projects.map((x) => `
-    <article class="project glass tilt reveal" data-cat="${esc((x.category || "").split(" · ")[0])}" style="--accent:${esc(x.accent || "#3d7bff")}">
-      ${x.image ? `<div class="shot"><img src="${esc(x.image)}" alt="${esc(x.name)} screenshot" loading="lazy"></div>` : `<div class="icon">${esc(initials(x.name))}</div>`}
-      <span class="cat">${esc(x.category || "")}</span>
-      <h3>${esc(x.name)}</h3>
-      <div class="sub">${esc(x.subtitle || "")}</div>
-      <p>${esc(x.description || "")}</p>
-      <div class="tags">${(x.tags || []).map((t) => `<span class="tag">${esc(t)}</span>`).join("")}</div>
-      ${x.links?.length ? `<div class="links">${x.links.map(linkBtn).join("")}</div>` : `<span class="private">${ICONS.lock} Private / client work · details on request</span>`}
+  $("#workCount").textContent = `${String(projects.length).padStart(2, "0")} projects`;
+  $("#workList").innerHTML = projects.map((x, i) => `
+    <article class="work">
+      <div class="work-info reveal">
+        <div class="work-meta"><span class="num">${String(i + 1).padStart(2, "0")}</span><span class="rule"></span><span>${esc(x.category || "")}${x.year ? ` · ${esc(x.year)}` : ""}</span></div>
+        <h3>${esc(x.name)}${x.native ? `<span class="native">${esc(x.native)}</span>` : ""}</h3>
+        <p class="subtitle">${esc(x.subtitle || "")}</p>
+        <p class="desc">${esc(x.description || "")}</p>
+        <div class="tags">${(x.tags || []).map((t) => `<span>${esc(t)}</span>`).join("")}</div>
+        <div class="links">${(x.links || []).map((l) => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)} <span aria-hidden="true">↗</span></a>`).join("")}</div>
+      </div>
+      <div class="work-visual reveal">${visual(x)}</div>
     </article>`).join("");
-  $("#filters").addEventListener("click", (e) => {
-    const b = e.target.closest(".filter");
-    if (!b) return;
-    document.querySelectorAll(".filter").forEach((f) => f.classList.toggle("on", f === b));
-    document.querySelectorAll(".project").forEach((card) => card.classList.toggle("hide", b.dataset.cat !== "All" && card.dataset.cat !== b.dataset.cat));
-  });
 
-  // Journey
-  const tl = (items, a, b) => items.map((e) => `<li class="glass reveal">${e.period ? `<span class="when">${esc(e.period)}</span>` : ""}<h4>${esc(e[a])}</h4><div class="org">${[e[b], e.location].filter(Boolean).map(esc).join(" · ")}</div>${e.description ? `<p>${esc(e.description)}</p>` : ""}</li>`).join("");
-  const hasExp = (p.experience || []).length > 0;
-  $("#expCol").hidden = !hasExp;
-  $("#journey .timeline-wrap").classList.toggle("single", !hasExp);
-  $("#journey h2").textContent = hasExp ? "Experience & education" : "Education";
-  $("#experience").innerHTML = tl(p.experience || [], "role", "org");
-  $("#education").innerHTML = tl(p.education || [], "school", "degree");
+  // about
+  $("#statement").innerHTML = rich(p.statement || "");
+  $("#aboutText").innerHTML = (p.about || []).map((t) => `<p>${esc(t)}</p>`).join("");
+  const facts = [{ label: "Based in", value: p.location }];
+  if ((p.education || []).length) facts.push({ label: "Education", value: p.education.map((e) => [e.degree, e.school].filter(Boolean).join(", ")), list: true });
+  if ((p.experience || []).length) facts.push({ label: "Experience", value: p.experience.map((e) => [e.role, e.org].filter(Boolean).join(", ")), list: true });
+  facts.push(...(p.facts || []));
+  $("#facts").innerHTML = facts.map((f) => `<div><dt>${esc(f.label)}</dt><dd>${f.list ? f.value.map((v) => `<span>${esc(v)}</span>`).join("") : esc(f.value)}</dd></div>`).join("");
+  $("#stats").innerHTML = (p.stats || []).map((s) => `<div class="stat reveal"><span class="v" data-to="${esc(s.value)}">${esc(s.value)}</span><span class="l">${esc(s.label)}</span></div>`).join("");
 
-  // Skills
-  $("#skillGroups").innerHTML = (p.skills || []).map((g) => `<div class="skill-group glass reveal"><h4>${esc(g.group)}</h4><div class="tags">${g.items.map((t) => `<span class="tag">${esc(t)}</span>`).join("")}</div></div>`).join("");
-  tagSphere((p.skills || []).flatMap((g) => g.items));
+  // stack
+  $("#stackGrid").innerHTML = (p.skills || []).map((g) => `<div class="stack-col reveal"><h4>${esc(g.group)}</h4><ul>${g.items.map((t) => `<li>${esc(t)}</li>`).join("")}</ul></div>`).join("");
 
-  typeRoles(p.roles || [p.title]);
-  if (p.github?.showLatest) liveGithub(p.github, projects);
+  // contact
+  $("#mail").href = `mailto:${p.email}`;
+  $("#mailText").textContent = p.email;
+  $("#contactLinks").innerHTML = (p.links || []).map((l) => `<li><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)} ↗</a></li>`).join("");
+
+  if (p.github?.showLatest) moreOnGithub(p.github, projects);
 }
 
-const initials = (n) => n.replace(/\(.*?\)/g, "").split(/[\s-]+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
-
-function typeRoles(roles) {
-  const el = $("#typed");
-  if (reduced) { el.textContent = roles[0]; return; }
-  let i = 0, j = 0, del = false;
-  (function tick() {
-    const word = roles[i % roles.length];
-    el.textContent = word.slice(0, j);
-    if (!del && j === word.length) { del = true; return setTimeout(tick, 1700); }
-    if (del && j === 0) { del = false; i++; }
-    j += del ? -1 : 1;
-    setTimeout(tick, del ? 32 : 65);
-  })();
+function visual(x) {
+  const v = x.visual || {};
+  if (v.type === "voice") {
+    return `<div class="visual" data-voice='${esc(JSON.stringify(v.lines || []))}'>
+      <span class="visual-label"><i></i>Listening</span>
+      <div class="voice"><div class="orb"></div>
+        <div class="wave">${Array.from({ length: 14 }, (_, i) => `<i style="--i:${i}"></i>`).join("")}</div>
+        <div class="bubble"><div class="say"></div><div class="does"></div></div>
+      </div></div>`;
+  }
+  if (v.type === "phone" && v.image) {
+    return `<div class="visual"><div class="phone-stage"><div class="phone"><img src="${esc(v.image)}" alt="${esc(x.name)} app screen" loading="lazy"></div></div><div class="phone-shadow"></div></div>`;
+  }
+  if (v.type === "decision") {
+    return `<div class="visual"><div class="decision">
+      <div class="lbl">Input</div><div class="input">${esc(v.input || "")}</div>
+      <div class="q">${esc(v.question || "")}</div>
+      ${(v.options || []).map((o) => `<div class="opt"><span>${esc(o.label)}</span><span class="v">${Math.round((+o.value || 0) * 100)}%</span><div class="bar"><i data-w="${Math.round((+o.value || 0) * 100)}"></i></div></div>`).join("")}
+      ${v.note ? `<div class="note">${esc(v.note)}</div>` : ""}
+    </div></div>`;
+  }
+  if (v.type === "sos") {
+    return `<div class="visual sos-visual">
+      <span class="visual-label"><i class="red"></i>Emergency</span>
+      <div class="sos"><div class="sos-ring"></div><div class="sos-ring r2"></div><div class="sos-disc"><b>SOS</b><small class="sos-count">Hold</small></div></div>
+      <div class="sos-facts">${(v.facts || []).map((f) => `<div><b>${esc(f.value)}</b><span>${esc(f.label)}</span></div>`).join("")}</div>
+    </div>`;
+  }
+  if (v.type === "image" && v.image) {
+    return `<div class="visual"><img src="${esc(v.image)}" alt="${esc(x.name)}" loading="lazy" style="width:100%;height:100%;object-fit:cover"></div>`;
+  }
+  const initials = x.name.split(/[\s-]+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("");
+  return `<div class="visual"><span class="mono-visual">${esc(initials)}</span></div>`;
 }
 
-async function liveGithub(cfg, projects) {
+async function moreOnGithub(cfg, projects) {
   try {
-    const res = await fetch(`https://api.github.com/users/${cfg.username}/repos?sort=updated&per_page=30`);
+    const res = await fetch(`https://api.github.com/users/${cfg.username}/repos?sort=updated&per_page=40`);
     if (!res.ok) return;
     const shown = new Set(projects.flatMap((x) => (x.links || []).map((l) => l.url.toLowerCase().replace(/\/$/, ""))));
-    const repos = (await res.json()).filter((r) => !r.private && !(cfg.exclude || []).includes(r.name) && !shown.has(r.html_url.toLowerCase()));
+    const repos = (await res.json()).filter((r) => !r.private && !r.archived && !(cfg.exclude || []).includes(r.name) && !shown.has(r.html_url.toLowerCase()));
     if (!repos.length) return;
-    $("#ghGrid").innerHTML = repos.slice(0, 6).map((r) => `<a class="gh-card" href="${r.html_url}" target="_blank" rel="noopener"><b>${esc(r.name)}</b><span class="d">${esc(r.description || "No description yet")}</span><span>${esc(r.language || "")} · ★ ${r.stargazers_count} · updated ${new Date(r.updated_at).toLocaleDateString()}</span></a>`).join("");
-    $("#ghLive").hidden = false;
-    observe($("#ghLive"));
+    $("#moreList").innerHTML = repos.slice(0, 6).map((r) => `<li><a href="${r.html_url}" target="_blank" rel="noopener"><b>${esc(r.name)}</b><span class="d">${esc(r.description || "")}</span><span class="m">${esc(r.language || "")} ↗</span></a></li>`).join("");
+    $("#more").hidden = false;
+    observeReveal($("#more"));
   } catch {}
 }
 
-// 3D skill sphere (pure CSS transforms)
-function tagSphere(words) {
-  const box = $("#tagSphere");
-  const uniq = [...new Set(words)].slice(0, 30);
-  box.innerHTML = uniq.map((w) => `<span>${esc(w)}</span>`).join("");
-  const els = [...box.children];
-  const n = els.length;
-  const pts = els.map((_, i) => {
-    const y = 1 - (i / (n - 1)) * 2, r = Math.sqrt(1 - y * y), t = Math.PI * (3 - Math.sqrt(5)) * i;
-    return [Math.cos(t) * r, y, Math.sin(t) * r];
-  });
-  let ax = 0.003, ay = 0.005, rx = 0, ry = 0, dragging = false, lx = 0, ly = 0;
-  const draw = () => {
-    const R = box.clientWidth * 0.44;
-    const cx = Math.cos(rx), sx = Math.sin(rx), cy = Math.cos(ry), sy = Math.sin(ry);
-    els.forEach((el, i) => {
-      let [x, y, z] = pts[i];
-      [y, z] = [y * cx - z * sx, y * sx + z * cx];
-      [x, z] = [x * cy + z * sy, -x * sy + z * cy];
-      const s = (z + 2) / 3;
-      el.style.transform = `translate(-50%,-50%) translate3d(${x * R}px,${y * R}px,0) scale(${0.55 + s * 0.65})`;
-      el.style.opacity = (0.25 + s * 0.75).toFixed(2);
-      el.style.zIndex = Math.round(s * 100);
-    });
-  };
-  // animate only while the sphere is on screen
-  let visible = false, raf = 0;
-  const loop = () => { if (!visible) { raf = 0; return; } if (!dragging) { rx += ax; ry += ay; } draw(); raf = requestAnimationFrame(loop); };
-  new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible && !raf && !reduced) raf = requestAnimationFrame(loop); }).observe(box);
-  box.addEventListener("pointerdown", (e) => { dragging = true; lx = e.clientX; ly = e.clientY; box.setPointerCapture(e.pointerId); });
-  box.addEventListener("pointermove", (e) => {
-    if (!dragging) return;
-    ry += (e.clientX - lx) * 0.008; rx -= (e.clientY - ly) * 0.008;
-    ay = (e.clientX - lx) * 0.0008 || ay; ax = -(e.clientY - ly) * 0.0008 || ax;
-    lx = e.clientX; ly = e.clientY;
-  });
-  box.addEventListener("pointerup", () => (dragging = false));
-  draw();
-}
-
-// interactions
-function tilt() {
-  if (!finePointer || reduced) return;
-  document.querySelectorAll(".tilt, .tilt-soft").forEach((el) => {
-    const max = el.classList.contains("tilt-soft") ? 3 : 9;
-    el.addEventListener("pointermove", (e) => {
-      const r = el.getBoundingClientRect(), px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
-      el.style.transform = `perspective(1000px) rotateX(${(0.5 - py) * max}deg) rotateY(${(px - 0.5) * max}deg) translateZ(0)`;
-      el.style.setProperty("--mx", `${px * 100}%`); el.style.setProperty("--my", `${py * 100}%`);
-    });
-    el.addEventListener("pointerleave", () => (el.style.transform = ""));
-  });
-  const card = $("#portraitCard");
-  window.addEventListener("pointermove", (e) => {
-    const px = e.clientX / innerWidth - 0.5, py = e.clientY / innerHeight - 0.5;
-    card.style.transform = `rotateY(${px * 22}deg) rotateX(${-py * 18}deg)`;
-    const shine = card.querySelector(".shine");
-    shine.style.setProperty("--mx", `${50 + px * 80}%`); shine.style.setProperty("--my", `${50 + py * 80}%`);
-  });
-}
-
-let io;
-function observe(el) { io ? io.observe(el) : el.classList.add("in"); }
+/* ---------------- behaviour ---------------- */
+let revealIO;
+function observeReveal(el) { revealIO ? revealIO.observe(el) : el.classList.add("in"); }
 function reveals() {
-  io = new IntersectionObserver((entries) => entries.forEach((en) => {
-    if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); }
-  }), { threshold: 0.12, rootMargin: "0px 0px -40px 0px" });
-  document.querySelectorAll(".reveal").forEach((el, i) => { el.style.transitionDelay = `${(i % 4) * 70}ms`; io.observe(el); });
+  revealIO = new IntersectionObserver((es) => es.forEach((e) => {
+    if (!e.isIntersecting) return;
+    e.target.classList.add("in");
+    revealIO.unobserve(e.target);
+    e.target.querySelectorAll?.(".bar i").forEach((b) => (b.style.width = b.dataset.w + "%"));
+    if (e.target.classList.contains("stat")) countUp(e.target.querySelector(".v"));
+  }), { threshold: 0.15, rootMargin: "0px 0px -60px 0px" });
+  $$(".reveal").forEach((el) => {
+    const sib = [...el.parentElement.children].filter((c) => c.classList.contains("reveal"));
+    el.style.transitionDelay = `${Math.min(sib.indexOf(el), 4) * 90}ms`;
+    revealIO.observe(el);
+  });
+}
+
+function countUp(el) {
+  const m = /^(\d+)(.*)$/.exec(el.dataset.to || "");
+  if (!m || reduced) return;
+  const end = +m[1], suffix = m[2], t0 = performance.now(), dur = 1400;
+  const step = (t) => {
+    const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 4);
+    el.textContent = Math.round(end * e) + suffix;
+    if (k < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+// Sohayok: cycle through example commands
+function voiceDemos() {
+  $$("[data-voice]").forEach((box) => {
+    let lines = [];
+    try { lines = JSON.parse(box.dataset.voice); } catch {}
+    if (!lines.length) return;
+    const say = $(".say", box), does = $(".does", box);
+    let i = 0, timer = 0, visible = false;
+    const show = () => {
+      const l = lines[i++ % lines.length];
+      say.classList.remove("show"); does.classList.remove("show");
+      setTimeout(() => { say.textContent = `“${l.say}”`; say.classList.add("show"); }, 350);
+      setTimeout(() => { does.textContent = `→ ${l.does}`; does.classList.add("show"); }, 1250);
+    };
+    const run = () => { clearInterval(timer); if (!visible) return; show(); if (!reduced) timer = setInterval(show, 3600); };
+    new IntersectionObserver(([e]) => { visible = e.isIntersecting; run(); box.classList.toggle("paused", !visible); }, { threshold: 0.2 }).observe(box);
+  });
+}
+
+// Joruri BD: SOS countdown loop
+function sosDemos() {
+  $$(".sos-visual").forEach((box) => {
+    const c = $(".sos-count", box), disc = $(".sos-disc", box);
+    const steps = ["Hold", "3", "2", "1", "Sent ✓"];
+    let i = 0, timer = 0;
+    const tick = () => { const s = steps[i++ % steps.length]; c.textContent = s; disc.classList.toggle("sent", s.startsWith("Sent")); };
+    new IntersectionObserver(([e]) => {
+      clearInterval(timer);
+      if (e.isIntersecting && !reduced) timer = setInterval(tick, 900);
+    }, { threshold: 0.2 }).observe(box);
+  });
+}
+
+// pause CSS animations that are off screen (cheaper on phones)
+function pauseOffscreen() {
+  const io = new IntersectionObserver((es) => es.forEach((e) => e.target.classList.toggle("paused", !e.isIntersecting)));
+  [".hero", ".marquee", ".visual"].forEach((s) => $$(s).forEach((el) => io.observe(el)));
 }
 
 function nav() {
-  const navEl = $("#nav");
-  addEventListener("scroll", () => navEl.classList.toggle("scrolled", scrollY > 30), { passive: true });
-  $("#navToggle").addEventListener("click", () => navEl.classList.toggle("open"));
-  $("#navLinks").addEventListener("click", () => navEl.classList.remove("open"));
-  const links = [...document.querySelectorAll(".nav-links a")];
+  const navEl = $("#nav"), bar = $("#progress");
+  let lastY = scrollY, ticking = false;
+  const onScroll = () => {
+    const y = scrollY, max = document.documentElement.scrollHeight - innerHeight;
+    navEl.classList.toggle("scrolled", y > 40);
+    navEl.classList.toggle("hide", y > lastY && y > 400 && !navEl.classList.contains("open"));
+    lastY = y;
+    bar.style.transform = `scaleX(${max > 0 ? y / max : 0})`;
+    ticking = false;
+  };
+  addEventListener("scroll", () => { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
+  const toggle = $("#navToggle");
+  toggle.addEventListener("click", () => { const o = navEl.classList.toggle("open"); toggle.setAttribute("aria-expanded", o); document.body.style.overflow = o ? "hidden" : ""; });
+  $("#navLinks").addEventListener("click", (e) => { if (e.target.closest("a")) { navEl.classList.remove("open"); toggle.setAttribute("aria-expanded", false); document.body.style.overflow = ""; } });
+  const links = $$(".nav-links a:not(.nav-cta)");
   const spy = new IntersectionObserver((es) => es.forEach((e) => {
     if (e.isIntersecting) links.forEach((a) => a.classList.toggle("active", a.getAttribute("href") === `#${e.target.id}`));
   }), { rootMargin: "-45% 0px -50% 0px" });
-  document.querySelectorAll("section[id]").forEach((s) => spy.observe(s));
+  $$("section[id]").forEach((s) => spy.observe(s));
 }
 
-// pause decorative CSS animations (portrait rings) while they are off screen
-function pauseOffscreen() {
-  const po = new IntersectionObserver((es) => es.forEach((e) => e.target.classList.toggle("paused", !e.isIntersecting)));
-  document.querySelectorAll(".hero-visual").forEach((el) => po.observe(el));
+function pointerFx() {
+  if (!fine || reduced) return;
+  // soft cursor ring
+  const cur = $("#cursor");
+  let x = innerWidth / 2, y = innerHeight / 2, cx = x, cy = y;
+  addEventListener("pointermove", (e) => { x = e.clientX; y = e.clientY; }, { passive: true });
+  (function loop() { cx += (x - cx) * 0.2; cy += (y - cy) * 0.2; cur.style.transform = `translate3d(${cx}px,${cy}px,0)`; requestAnimationFrame(loop); })();
+  document.addEventListener("pointerover", (e) => cur.classList.toggle("hover", !!e.target.closest("a, button")));
+
+  // magnetic buttons
+  $$(".magnetic").forEach((el) => {
+    el.addEventListener("pointermove", (e) => {
+      const r = el.getBoundingClientRect();
+      el.style.transform = `translate(${(e.clientX - r.left - r.width / 2) * 0.25}px, ${(e.clientY - r.top - r.height / 2) * 0.35}px)`;
+    });
+    el.addEventListener("pointerleave", () => (el.style.transform = ""));
+  });
+
+  // portrait follows the pointer in 3D
+  const arch = $("#arch");
+  addEventListener("pointermove", (e) => {
+    if (scrollY > innerHeight) return;
+    const px = e.clientX / innerWidth - 0.5, py = e.clientY / innerHeight - 0.5;
+    arch.style.transform = `rotateY(${px * 10}deg) rotateX(${-py * 8}deg)`;
+    arch.style.setProperty("--sx", `${50 + px * 70}%`); arch.style.setProperty("--sy", `${40 + py * 70}%`);
+  }, { passive: true });
+
+  // project visuals tilt
+  $$(".visual").forEach((v) => {
+    v.addEventListener("pointermove", (e) => {
+      const r = v.getBoundingClientRect(), px = (e.clientX - r.left) / r.width - 0.5, py = (e.clientY - r.top) / r.height - 0.5;
+      v.style.transform = `rotateY(${px * 8}deg) rotateX(${-py * 8}deg)`;
+    });
+    v.addEventListener("pointerleave", () => (v.style.transform = ""));
+  });
 }
 
-loadProfile().then((p) => { render(p); reveals(); tilt(); nav(); pauseOffscreen(); document.title = `${p.name} · ${p.title}`; })
-  .catch((e) => { console.error(e); document.body.insertAdjacentHTML("beforeend", '<p style="position:relative;z-index:5;text-align:center">Could not load profile data.</p>'); });
+function clock() {
+  const fmt = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Dhaka", hour: "2-digit", minute: "2-digit", hour12: true });
+  const tick = () => ($("#clock").textContent = fmt.format(new Date()).toUpperCase());
+  tick(); setInterval(tick, 30000);
+}
+
+loadProfile()
+  .then((p) => { render(p); reveals(); voiceDemos(); sosDemos(); pauseOffscreen(); nav(); pointerFx(); clock(); initChat(p); })
+  .catch((e) => { console.error(e); document.body.insertAdjacentHTML("beforeend", '<p style="text-align:center;padding:40px">Could not load the profile.</p>'); });

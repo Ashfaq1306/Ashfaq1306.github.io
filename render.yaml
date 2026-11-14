@@ -1,0 +1,20 @@
+# Render blueprint for the profile's AI assistant (chat-server/).
+# Deploy: Render dashboard -> New -> Blueprint -> pick this repo.
+# Render asks for ANTHROPIC_API_KEY (sync: false) - paste your key there; it never goes in git.
+services:
+  - type: web
+    name: ashfaq-profile-chat
+    runtime: node
+    rootDir: chat-server
+    buildCommand: npm install --omit=dev
+    startCommand: node server.mjs
+    plan: free
+    region: singapore
+    healthCheckPath: /health
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ALLOWED_ORIGINS
+        value: https://ashfaq1306.github.io
+      - key: DAILY_LIMIT
+        value: "400"
